@@ -30,6 +30,9 @@
 		"@auth/core": "^0.41.1",
 		"@auth/sveltekit": "^1.11.1",
 		"discord.js": "^14.25.0",
+		"emoji-datasource": "^16.0.0",
+		"kysely": "^0.28.8",
+		"kysely-postgres-js": "^3.0.0",
 		"node-emoji": "^2.2.0",
 		"postgres": "^3.4.7"
 	}

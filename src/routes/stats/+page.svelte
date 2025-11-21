@@ -1,12 +1,28 @@
 <script>
-    import { getUserStat, getUserDiscord, getInventory} from "$lib/remote/functions.remote";
+    import { getUserStat, getUserDiscord, getInventory, getItem} from "$lib/remote/functions.remote";
+    import { emojiToURL } from "$lib/frontend/utils";
     
+    // Get basic data
     let dbStats = await getUserStat();
     let userDiscord = await getUserDiscord();
     let userInventory = await getInventory();
+    
+    // Add item info to each inventory item (simple loop)
 
+    try {
+        for (let i = 0; i < userInventory.length; i++) {
+        let item_info = await getItem(userInventory[i].item_id);
+        userInventory[i].name = item_info.name;
+        userInventory[i].description = item_info.description;
+        userInventory[i].icon = item_info.icon;
+    }
+    } catch (error) {
+        console.error(error)
+    }
+    
+    
     // Parse the data
-    const userStats = dbStats[0];
+    const userStats = dbStats;
     const discordUser = userDiscord[0];
     const inventory = userInventory;
 
@@ -30,7 +46,7 @@
     }
 </style>
 
-<div class="min-h-screen bg-gradient-to-br from-lavender-100 to-cyan-50 aldrich" style="background: linear-gradient(135deg, #e6e6fa 0%, #e0ffff 100%);">
+<div class="min-h-screen bg-linear-to-br from-lavender-100 to-cyan-50 aldrich" style="background: linear-gradient(135deg, #e6e6fa 0%, #e0ffff 100%);">
     <div class="container mx-auto p-6">
         <!-- Header -->
         <div class="mb-8 text-center">
@@ -110,14 +126,18 @@
                 <div class="space-y-4">
                     {#each inventory.filter(item => item.quantity > 0).slice(0, 3) as item}
                         <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded">
-                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                                <span class="text-white text-sm">{item.item_id}</span>
-                            </div>
+                            {#if item.icon && emojiToURL(item.icon)}
+                                <img src={emojiToURL(item.icon)} alt={item.name} class="w-8 h-8" />
+                            {:else}
+                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white text-sm">{item.item_id}</span>
+                                </div>
+                            {/if}
                             <div class="flex-1">
                                 <div class="text-black font-bold">
-                                    {#if item.item_id === 1}Bread{:else if item.item_id === 4}Wallet Lock{:else if item.item_id === 8}Game Kit{:else if item.item_id === 14}Rice Ear{:else}Item #{item.item_id}{/if}
+                                    {item.name || `Item #${item.item_id}`}
                                 </div>
-                                <div class="text-blue-500 text-sm">Item ID: {item.item_id}</div>
+                                <div class="text-gray-500 text-sm">{item.description || `Item ID: ${item.item_id}`}</div>
                                 <div class="text-black text-sm font-bold">Quantity: {item.quantity}</div>
                             </div>
                         </div>
@@ -145,12 +165,19 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center mr-3">
-                                            <span class="text-white text-sm font-bold">{item.item_id}</span>
+                                        {#if item.icon && emojiToURL(item.icon)}
+                                            <img src={emojiToURL(item.icon)} alt={item.name} class="w-8 h-8 mr-3" />
+                                        {:else}
+                                            <div class="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center mr-3">
+                                                <span class="text-white text-sm font-bold">{item.item_id}</span>
+                                            </div>
+                                        {/if}
+                                        <div>
+                                            <div class="text-black font-medium">
+                                                {item.name || `Item #${item.item_id}`}
+                                            </div>
+                                            <div class="text-gray-500 text-xs">{item.description || ''}</div>
                                         </div>
-                                        <span class="text-black font-medium">
-                                            {#if item.item_id === 1}Bread{:else if item.item_id === 4}Wallet Lock{:else if item.item_id === 8}Game Kit{:else if item.item_id === 14}Rice Ear{:else}Item #{item.item_id}{/if}
-                                        </span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
