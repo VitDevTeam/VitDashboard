@@ -55,3 +55,10 @@ export function emojiToURL(e) {
   // Unknown or plain text
   return null;
 }
+
+
+
+export function DatetoTimestamp(date ) {
+
+  return date.getTime();
+}

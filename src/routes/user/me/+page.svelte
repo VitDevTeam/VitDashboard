@@ -1,30 +1,19 @@
 <script>
-    import { getUserStat, getUserDiscord, getInventory, getItem} from "$lib/remote/functions.remote";
+    import { getUserDiscord } from "$lib/remote/discord.remote";
+    import { getUserStat, getInventoryWithItems, getUserEffects } from "$lib/remote/db.remote";
     import { emojiToURL } from "$lib/frontend/utils";
+    import { Avatar, Progress as ProgressBar } from "@skeletonlabs/skeleton-svelte";
+    import TimeCountdown from "$lib/components/time-countdown.svelte";
     
-    // Get basic data
-    let dbStats = await getUserStat();
-    let userDiscord = await getUserDiscord();
-    let userInventory = await getInventory();
+    const [dbStats, userDiscord, inventory, effects] = await Promise.all([
+        getUserStat(),
+        getUserDiscord(),
+        getInventoryWithItems(),
+        getUserEffects()
+    ]);
     
-    // Add item info to each inventory item (simple loop)
-
-    try {
-        for (let i = 0; i < userInventory.length; i++) {
-        let item_info = await getItem(userInventory[i].item_id);
-        userInventory[i].name = item_info.name;
-        userInventory[i].description = item_info.description;
-        userInventory[i].icon = item_info.icon;
-    }
-    } catch (error) {
-        console.error(error)
-    }
-    
-    
-    // Parse the data
     const userStats = dbStats;
     const discordUser = userDiscord[0];
-    const inventory = userInventory;
 
     // Calculate inventory summary
     const totalItems = inventory.reduce((sum, item) => sum + item.quantity, 0);
@@ -90,33 +79,31 @@
 
         <!-- Effects and Inventory Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Effects Section -->
             <div class="bg-white rounded-lg border border-gray-300 p-6">
                 <h3 class="text-black font-bold mb-4 text-center bg-gray-100 py-2 rounded">EFFECTS</h3>
                 <div class="space-y-4">
-                    <!-- Well Rested Effect -->
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded">
-                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                            <span class="text-white text-sm">✓</span>
-                        </div>
-                        <div>
-                            <div class="text-black font-bold">Well Rested</div>
-                            <div class="text-black text-sm">Energy regeneration +10%</div>
-                            <div class="text-gray-500 text-sm">⏰ {Math.floor(Math.random() * 24)}h</div>
-                        </div>
-                    </div>
-
-                    <!-- Focused Effect -->
-                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded">
-                        <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                            <span class="text-white text-sm">⚡</span>
-                        </div>
-                        <div>
-                            <div class="text-black font-bold">Focused</div>
-                            <div class="text-black text-sm">Productivity +15%</div>
-                            <div class="text-gray-500 text-sm">⏰ {Math.floor(Math.random() * 12)}h</div>
-                        </div>
-                    </div>
+                    {#if effects.length === 0}
+                        <p class="text-center text-gray-500">No active effects</p>
+                    {:else}
+                        {#each effects as effect}
+                            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded">
+                                {#if effect.icon && emojiToURL(effect.icon)}
+                                    <img src={emojiToURL(effect.icon)} alt={effect.name} class="w-8 h-8" />
+                                {:else}
+                                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                        <span class="text-white text-sm">✓</span>
+                                    </div>
+                                {/if}
+                                <div>
+                                    <div class="text-black font-bold">{effect.name}</div>
+                                    <div class="text-black text-sm">{effect.description}</div>
+                                    <div class="text-gray-500 text-sm">
+                                        <TimeCountdown endDate={effect.endDate} />
+                                    </div>
+                                </div>
+                            </div>
+                        {/each}
+                    {/if}
                 </div>
             </div>
 

@@ -23,7 +23,7 @@ export interface ItemsTable {
     is_usable: boolean;
 }
 
-export interface UserEffects {
+export interface user_effects {
     id: number;
     name: string;
     description: string;
@@ -31,7 +31,7 @@ export interface UserEffects {
 }
 
 
-export interface UserCurrentEffects {
+export interface current_effects {
     id: number;
     user_id: string;
     effect_id: number;
@@ -39,11 +39,17 @@ export interface UserCurrentEffects {
     duration : number;  // as tick, 1 tick = 30 sec.
 }
 
+export interface guilds {
+    id:string;
+    coins:string;
+}
+
 // Database interface
 export interface Database {
     users: UsersTable;
     inventory: InventoryTable;
     items: ItemsTable;
-    userEffects : UserEffects;
-    currentEffects : UserCurrentEffects;
+    user_effects : user_effects;
+    current_effects : current_effects;
+    guilds: guilds;
 }

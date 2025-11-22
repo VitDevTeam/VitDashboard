@@ -40,27 +40,6 @@ export const getUserStat = query(async (id: string = TEST_ID) => {
     }
 });
 
-// Get Discord user info
-export const getUserDiscord = query(async (id: string = TEST_ID) => {
-    try {
-        const discord_info = await bot.users.fetch(id);
-        return [JSON.parse(JSON.stringify(discord_info))];
-    } catch (error: any) {
-        console.warn('Discord API error, using mock data:', error.message);
-        return [{
-            id: TEST_ID,
-            username: "youngcoder45",
-            globalName: "Aditya ✧ YC45",
-            discriminator: "0",
-            avatar: "cf296ec1b2af5b10746bb89dbd24fc38",
-            avatarURL: "https://cdn.discordapp.com/avatars/955695820999639120/cf296ec1b2af5b10746bb89dbd24fc38.webp",
-            displayAvatarURL: "https://cdn.discordapp.com/avatars/955695820999639120/cf296ec1b2af5b10746bb89dbd24fc38.webp",
-            primaryGuild: {
-                tag: "CODE"
-            }
-        }];
-    }
-});
 
 // Get user inventory (id, item_id, quantity)
 export const getInventory = query(async (id: string = TEST_ID) => {
@@ -99,31 +78,28 @@ export const getInventory = query(async (id: string = TEST_ID) => {
     }
 });
 
-// Get single item by ID (id, name, description, icon, is_usable)
-export const getItem = query(num, async (item_id: number) => {
+export const getItem = query.batch(num, async (item_ids: number[]) => {
     try {
-        const item = await db
+        const items = await db
             .selectFrom('items')
             .selectAll()
-            .where('id', '=', item_id)
-            .executeTakeFirst();
+            .where('id', 'in', item_ids)
+            .execute();
         
-        if (item) {
-            return item;
-        }
+        const lookup = new Map(items.map(item => [item.id, item]));
         
-        // If no item found, return default
-        return {
-            id: item_id,
-            name: `Item #${item_id}`,
-            description: "Unknown item",
-            icon: "📦",
-            is_usable: false
-        } as ItemsTable;
+        return (item_id: number) => {
+            return lookup.get(item_id) || {
+                id: item_id,
+                name: `Item #${item_id}`,
+                description: "Unknown item",
+                icon: "📦",
+                is_usable: false
+            } as ItemsTable;
+        };
     } catch (error: any) {
         console.warn('Database error, using mock items data:', error.message);
-        
-        return mockItems[item_id] || {
+        return (item_id: number) => mockItems[item_id] || {
             id: item_id,
             name: `Item #${item_id}`,
             description: "Unknown item",
@@ -133,7 +109,6 @@ export const getItem = query(num, async (item_id: number) => {
     }
 });
 
-// Get all items as a dictionary
 export const getAllItems = query(async () => {
     try {
         const items = await db
@@ -150,5 +125,107 @@ export const getAllItems = query(async () => {
     } catch (error: any) {
         console.warn('Database error, using mock items dictionary:', error.message);
         return mockItems;
+    }
+});
+
+export const getInventoryWithItems = query(async (id: string = TEST_ID) => {
+    try {
+        const inventory = await db
+            .selectFrom('inventory')
+            .innerJoin('items', 'inventory.item_id', 'items.id')
+            .select([
+                'inventory.id',
+                'inventory.item_id',
+                'inventory.quantity',
+                'items.name',
+                'items.description',
+                'items.icon',
+                'items.is_usable'
+            ])
+            .where('inventory.id', '=', id)
+            .execute();
+        
+        return inventory;
+    } catch (error: any) {
+        console.warn('Database error:', error.message);
+        return [];
+    }
+});
+
+export const getUserEffects = query(async (id: string = TEST_ID) => {
+    try {
+        const effects = await db
+            .selectFrom('current_effects')
+            .innerJoin('user_effects', 'current_effects.effect_id', 'user_effects.id')
+            .select([
+                'current_effects.id',
+                'current_effects.applied_at',
+                'current_effects.duration',
+                'user_effects.name',
+                'user_effects.description',
+                'user_effects.icon'
+            ])
+            .where('current_effects.user_id', '=', id)
+            .execute();
+        
+        return effects.map(effect => {
+            const appliedAt = new Date(effect.applied_at).getTime();
+            const durationMs = effect.duration * 30000;
+            const endDate = new Date(appliedAt + durationMs);
+            
+            return {
+                ...effect,
+                endDate: endDate.toISOString()
+            };
+        });
+    } catch (error: any) {
+        console.warn('Database error:', error.message);
+        return [];
+    }
+});
+
+
+export const getGuild = query(str, async (id: string) => {
+    try {
+        let info = await db
+            .selectFrom('guilds')
+            .selectAll()
+            .where('id', '=', id)
+            .executeTakeFirst();
+        
+        if (!info) {
+            await db
+                .insertInto('guilds')
+                .values({ id })
+                .execute();
+            
+            info = await db
+                .selectFrom('guilds')
+                .selectAll()
+                .where('id', '=', id)
+                .executeTakeFirst();
+        }
+
+        const allGuilds = await db
+            .selectFrom('guilds')
+            .select(['id', 'coins'])
+            .execute();
+        
+        const sorted = allGuilds.sort((a, b) => {
+            const coinsA = BigInt(a.coins);
+            const coinsB = BigInt(b.coins);
+            return coinsB > coinsA ? 1 : coinsB < coinsA ? -1 : 0;
+        });
+        
+        const rank = sorted.findIndex(g => g.id === id) + 1;
+
+        return {
+            guild_id: info.id,
+            coins: info.coins,
+            rank
+        };
+    } catch (error: any) {
+        console.warn('Database error:', error.message);
+        return null;
     }
 });
