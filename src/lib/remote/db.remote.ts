@@ -1,15 +1,11 @@
 import { query } from '$app/server';
-import { startBot } from "$lib/bot";
 import { db } from "$lib/db/index";
 import type { UsersTable, InventoryTable, ItemsTable } from "$lib/db/types";
 import { num, str } from "$lib/validation";
-
-const bot = await startBot();
-const TEST_ID = "1186872689038729237";
-
+import { getSession } from "$lib/auth/session";
 
 const mockUserStat: UsersTable = {
-    id: TEST_ID,
+    id: "955695820999639120",
     coins: "100000",
     energy: "54",
     energy_max: "100",
@@ -24,8 +20,12 @@ const mockItems: Record<number, ItemsTable> = {
     14: { id: 14, name: "rice ear", description: "ear of rice, you can make rice from it", icon: ":ear_of_rice:", is_usable: false }
 };
 
-// Get user stats (coins, energy, energy_max, mood, mood_max)
-export const getUserStat = query(async (id: string = TEST_ID) => {
+export const getUserStat = query(async (id?: string) => {
+    if (!id) {
+        const session = await getSession();
+        id = session?.user?.id || "955695820999639120";
+    }
+    
     try {
         const user = await db
             .selectFrom('users')
@@ -41,8 +41,11 @@ export const getUserStat = query(async (id: string = TEST_ID) => {
 });
 
 
-// Get user inventory (id, item_id, quantity)
-export const getInventory = query(async (id: string = TEST_ID) => {
+export const getInventory = query(async (id?: string) => {
+    if (!id) {
+        const session = await getSession();
+        id = session?.user?.id || "955695820999639120";
+    }
     try {
         const inventory = await db
             .selectFrom('inventory')
@@ -53,27 +56,26 @@ export const getInventory = query(async (id: string = TEST_ID) => {
         return inventory;
     } catch (error: any) {
         console.warn('Database error, using mock inventory data:', error.message);
-        // Mock inventory data
         return [
-            {id: TEST_ID, item_id: 1, quantity: 110},
-            {id: TEST_ID, item_id: 2, quantity: 0},
-            {id: TEST_ID, item_id: 3, quantity: 0},
-            {id: TEST_ID, item_id: 4, quantity: 52},
-            {id: TEST_ID, item_id: 5, quantity: 0},
-            {id: TEST_ID, item_id: 6, quantity: 0},
-            {id: TEST_ID, item_id: 7, quantity: 0},
-            {id: TEST_ID, item_id: 8, quantity: 444},
-            {id: TEST_ID, item_id: 9, quantity: 0},
-            {id: TEST_ID, item_id: 10, quantity: 0},
-            {id: TEST_ID, item_id: 11, quantity: 0},
-            {id: TEST_ID, item_id: 12, quantity: 0},
-            {id: TEST_ID, item_id: 13, quantity: 0},
-            {id: TEST_ID, item_id: 14, quantity: 5},
-            {id: TEST_ID, item_id: 15, quantity: 0},
-            {id: TEST_ID, item_id: 16, quantity: 0},
-            {id: TEST_ID, item_id: 17, quantity: 0},
-            {id: TEST_ID, item_id: 18, quantity: 0},
-            {id: TEST_ID, item_id: 26, quantity: 0}
+            {id: id, item_id: 1, quantity: 110},
+            {id: id, item_id: 2, quantity: 0},
+            {id: id, item_id: 3, quantity: 0},
+            {id: id, item_id: 4, quantity: 52},
+            {id: id, item_id: 5, quantity: 0},
+            {id: id, item_id: 6, quantity: 0},
+            {id: id, item_id: 7, quantity: 0},
+            {id: id, item_id: 8, quantity: 444},
+            {id: id, item_id: 9, quantity: 0},
+            {id: id, item_id: 10, quantity: 0},
+            {id: id, item_id: 11, quantity: 0},
+            {id: id, item_id: 12, quantity: 0},
+            {id: id, item_id: 13, quantity: 0},
+            {id: id, item_id: 14, quantity: 5},
+            {id: id, item_id: 15, quantity: 0},
+            {id: id, item_id: 16, quantity: 0},
+            {id: id, item_id: 17, quantity: 0},
+            {id: id, item_id: 18, quantity: 0},
+            {id: id, item_id: 26, quantity: 0}
         ] as InventoryTable[];
     }
 });
@@ -128,7 +130,11 @@ export const getAllItems = query(async () => {
     }
 });
 
-export const getInventoryWithItems = query(async (id: string = TEST_ID) => {
+export const getInventoryWithItems = query(async (id?: string) => {
+    if (!id) {
+        const session = await getSession();
+        id = session?.user?.id || "955695820999639120";
+    }
     try {
         const inventory = await db
             .selectFrom('inventory')
@@ -152,7 +158,11 @@ export const getInventoryWithItems = query(async (id: string = TEST_ID) => {
     }
 });
 
-export const getUserEffects = query(async (id: string = TEST_ID) => {
+export const getUserEffects = query(async (id?: string) => {
+    if (!id) {
+        const session = await getSession();
+        id = session?.user?.id || "955695820999639120";
+    }
     try {
         const effects = await db
             .selectFrom('current_effects')
@@ -229,3 +239,6 @@ export const getGuild = query(str, async (id: string) => {
         return null;
     }
 });
+
+
+

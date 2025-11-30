@@ -44,7 +44,59 @@ export interface guilds {
     coins:string;
 }
 
-// Database interface
+export interface guild_config {
+    guild_id:string;
+    prefix:string;
+    allow_rob: boolean;
+    
+}
+
+export interface user {
+    id: string;
+    email: string;
+    emailVerified: boolean;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    image?: string;
+}
+
+export interface session {
+    id: string;
+    expiresAt: Date;
+    token: string;
+    createdAt: Date;
+    updatedAt: Date;
+    ipAddress?: string;
+    userAgent?: string;
+    userId: string;
+}
+
+export interface account {
+    id: string;
+    accountId: string;
+    providerId: string;
+    userId: string;
+    accessToken?: string;
+    refreshToken?: string;
+    idToken?: string;
+    accessTokenExpiresAt?: Date;
+    refreshTokenExpiresAt?: Date;
+    scope?: string;
+    password?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface verification {
+    id: string;
+    identifier: string;
+    value: string;
+    expiresAt: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
 export interface Database {
     users: UsersTable;
     inventory: InventoryTable;
@@ -52,4 +104,9 @@ export interface Database {
     user_effects : user_effects;
     current_effects : current_effects;
     guilds: guilds;
+    guild_config: guild_config;
+    user: user;
+    session: session;
+    account: account;
+    verification: verification;
 }

@@ -1,18 +1,23 @@
 import { startBot } from "$lib/bot";
 import { query } from "$app/server";
 import { str } from "$lib/validation";
+import { getSession } from "$lib/auth/session";
 
 const bot = await startBot();
-const TEST_ID = "1186872689038729237";
 
-export const getUserDiscord = query(async (id: string = TEST_ID) => {
+export const getUserDiscord = query(async (id?: string) => {
+    if (!id) {
+        const session = await getSession();
+        id = session?.user?.id || "955695820999639120";
+    }
+    
     try {
         const discord_info = await bot.users.fetch(id);
         return [JSON.parse(JSON.stringify(discord_info))];
     } catch (error: any) {
         console.warn('Discord API error, using mock data:', error.message);
         return [{
-            id: TEST_ID,
+            id: id,
             username: "youngcoder45",
             globalName: "Aditya ✧ YC45",
             discriminator: "0",
@@ -26,7 +31,11 @@ export const getUserDiscord = query(async (id: string = TEST_ID) => {
     }
 });
 
-export const getUserGuilds = query(async(id: string = TEST_ID) => {
+export const getUserGuilds = query(async(id?: string) => {
+    if (!id) {
+        const session = await getSession();
+        id = session?.user?.id || "955695820999639120";
+    }
     try {
         const userGuilds: any[] = [];
         const allChecks: Promise<void>[] = [];

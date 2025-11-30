@@ -1,19 +1,15 @@
 <script>
-    import { getUserDiscord } from "$lib/remote/discord.remote";
-    import { getUserStat, getInventoryWithItems, getUserEffects } from "$lib/remote/db.remote";
     import { emojiToURL } from "$lib/frontend/utils";
     import { Avatar, Progress as ProgressBar } from "@skeletonlabs/skeleton-svelte";
     import TimeCountdown from "$lib/components/time-countdown.svelte";
+    import Nav from "$lib/components/nav.svelte";
     
-    const [dbStats, userDiscord, inventory, effects] = await Promise.all([
-        getUserStat(),
-        getUserDiscord(),
-        getInventoryWithItems(),
-        getUserEffects()
-    ]);
+    let { data } = $props();
     
-    const userStats = dbStats;
-    const discordUser = userDiscord[0];
+    const userStats = data.userStats;
+    const discordUser = data.discordUser;
+    const inventory = data.inventory;
+    const effects = data.effects;
 
     // Calculate inventory summary
     const totalItems = inventory.reduce((sum, item) => sum + item.quantity, 0);
@@ -34,6 +30,8 @@
         font-family: 'Aldrich', monospace;
     }
 </style>
+
+<Nav />
 
 <div class="min-h-screen bg-linear-to-br from-lavender-100 to-cyan-50 aldrich" style="background: linear-gradient(135deg, #e6e6fa 0%, #e0ffff 100%);">
     <div class="container mx-auto p-6">
