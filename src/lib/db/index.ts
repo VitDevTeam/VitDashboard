@@ -9,7 +9,7 @@ function shouldNoVerify(url: string) {
 import type { Database } from './types';
 
 
-export const sql = postgres(DB_URL, shouldNoVerify(DB_URL) ? { max: 3, ssl: { rejectUnauthorized: false } } : { max: 3 });
+export const sql = postgres(DB_URL, shouldNoVerify(DB_URL) ? { max: 2, ssl: { rejectUnauthorized: false } } : { max: 2 });
 
 
 export const dialect = new PostgresJSDialect({ postgres: sql });

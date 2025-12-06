@@ -6,6 +6,7 @@ import { getSession } from "$lib/auth/session";
 const bot = await startBot();
 
 export const getUserDiscord = query(async (id?: string) => {
+    console.log(`discord.remote: getUserDiscord called with id: ${id}`);
     if (!id) {
         const session = await getSession();
         id = session?.user?.id || "955695820999639120";
@@ -13,9 +14,10 @@ export const getUserDiscord = query(async (id?: string) => {
     
     try {
         const discord_info = await bot.users.fetch(id);
+        console.log(`discord.remote: getUserDiscord success for id: ${id}`);
         return [JSON.parse(JSON.stringify(discord_info))];
     } catch (error: any) {
-        console.warn('Discord API error, using mock data:', error.message);
+        console.error(`discord.remote: getUserDiscord error for id: ${id}. Returning mock data.`, error);
         return [{
             id: id,
             username: "youngcoder45",
@@ -32,6 +34,7 @@ export const getUserDiscord = query(async (id?: string) => {
 });
 
 export const getUserGuilds = query(async(id?: string) => {
+    console.log(`discord.remote: getUserGuilds called with id: ${id}`);
     if (!id) {
         const session = await getSession();
         id = session?.user?.id || "955695820999639120";
@@ -58,14 +61,16 @@ export const getUserGuilds = query(async(id?: string) => {
         }
         
         await Promise.all(allChecks);
+        console.log(`discord.remote: getUserGuilds success for id: ${id}`);
         return userGuilds;
     } catch (error) {
-        console.log("Error:", error)
+        console.error(`discord.remote: getUserGuilds error for id: ${id}. Returning empty array.`, error);
         return [];
     }
 });
 
 export const getDiscordGuild = query(str, async (guildId: string) => {
+    console.log(`discord.remote: getDiscordGuild called with guildId: ${guildId}`);
     try {
         const guild = bot.guilds.cache.get(guildId);
         
@@ -73,7 +78,7 @@ export const getDiscordGuild = query(str, async (guildId: string) => {
             return null;
         }
         
-        return {
+        const result = {
             id: guild.id,
             name: guild.name,
             iconURL: guild.iconURL(),
@@ -81,8 +86,10 @@ export const getDiscordGuild = query(str, async (guildId: string) => {
             description: guild.description,
             ownerId: guild.ownerId
         };
+        console.log(`discord.remote: getDiscordGuild success for guildId: ${guildId}`);
+        return result;
     } catch (error: any) {
-        console.log("Error:", error);
+        console.error(`discord.remote: getDiscordGuild error for guildId: ${guildId}. Returning null.`, error);
         return null;
     }
 });

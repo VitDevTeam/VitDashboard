@@ -7,7 +7,9 @@ import { db } from "$lib/db/index";
 const TEST_USER_ID = "955695820999639120";
 
 export async function getSession(event?: any) {
-    if (env.BYPASS_AUTH === "true") {
+    console.log('getSession: starting');
+        if (env.BYPASS_AUTH === "true") {
+        console.log('getSession: BYPASS_AUTH is true, returning test user');
         
         return {
             session: {
@@ -22,7 +24,8 @@ export async function getSession(event?: any) {
         };
     }
 
-    if (!event) {
+        if (!event) {
+        console.log('getSession: event is null, getting request event');
         event = getRequestEvent();
     }
 
@@ -35,42 +38,54 @@ export async function getSession(event?: any) {
         headers = new Headers({ cookie });
     }
 
-    if (!headers) {
+        if (!headers) {
+        console.error('getSession: Unable to get request headers');
         throw error(500, "Unable to get request headers");
     }
 
+        console.log('getSession: getting session from auth.api');
     const session = await auth.api.getSession({ headers });
+    console.log('getSession: session received', { userId: session?.user?.id });
 
-    if (!session) {
+        if (!session) {
+        console.error('getSession: session is null, unauthorized');
         throw error(401, "Unauthorized");
     }
 
+        console.log('getSession: getting account from db for user', session.user.id);
     const account = await db
         .selectFrom('account')
         .select(['accountId'])
         .where('userId', '=', session.user.id)
         .where('providerId', '=', 'discord')
         .executeTakeFirst();
+    console.log('getSession: account received', { accountId: account?.accountId });
 
-    if (!account) {
+        if (!account) {
+        console.error('getSession: Discord account not found for user', session.user.id);
         throw error(500, "Discord account not found");
     }
 
-    return {
+    const result = {
         ...session,
         user: {
             ...session.user,
             id: account.accountId
         }
     };
+    console.log('getSession: finished, returning session for user', { userId: result.user.id });
+    return result;
 }
 
 export async function requireAuth(event: any) {
+    console.log('requireAuth: starting');
     const session = await getSession(event);
     
-    if (!session || !session.user) {
+        if (!session || !session.user) {
+        console.error('requireAuth: Unauthorized, no session or user found');
         throw error(401, "Unauthorized");
     }
     
+        console.log('requireAuth: finished, user is authenticated', { userId: session.user.id });
     return session;
 }

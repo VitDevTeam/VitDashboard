@@ -21,6 +21,7 @@ const mockItems: Record<number, ItemsTable> = {
 };
 
 export const getUserStat = query(async (id?: string) => {
+    console.log(`db.remote: getUserStat called with id: ${id}`);
     if (!id) {
         const session = await getSession();
         id = session?.user?.id || "955695820999639120";
@@ -33,15 +34,17 @@ export const getUserStat = query(async (id?: string) => {
             .where('id', '=', id)
             .executeTakeFirst();
        
+        console.log(`db.remote: getUserStat success for id: ${id}`);
         return user || mockUserStat;
     } catch (error: any) {
-        console.warn('Database error, using mock data:', error.message);
+        console.error(`db.remote: getUserStat error for id: ${id}. Returning mock data.`, error);
         return mockUserStat;
     }
 });
 
 
 export const getInventory = query(async (id?: string) => {
+    console.log(`db.remote: getInventory called with id: ${id}`);
     if (!id) {
         const session = await getSession();
         id = session?.user?.id || "955695820999639120";
@@ -53,9 +56,10 @@ export const getInventory = query(async (id?: string) => {
             .where('id', '=', id)
             .execute();
         
+        console.log(`db.remote: getInventory success for id: ${id}`);
         return inventory;
     } catch (error: any) {
-        console.warn('Database error, using mock inventory data:', error.message);
+        console.error(`db.remote: getInventory error for id: ${id}. Returning mock data.`, error);
         return [
             {id: id, item_id: 1, quantity: 110},
             {id: id, item_id: 2, quantity: 0},
@@ -81,6 +85,7 @@ export const getInventory = query(async (id?: string) => {
 });
 
 export const getItem = query.batch(num, async (item_ids: number[]) => {
+    console.log(`db.remote: getItem called with item_ids: ${item_ids.join(', ')}`);
     try {
         const items = await db
             .selectFrom('items')
@@ -90,6 +95,7 @@ export const getItem = query.batch(num, async (item_ids: number[]) => {
         
         const lookup = new Map(items.map(item => [item.id, item]));
         
+        console.log(`db.remote: getItem success for item_ids: ${item_ids.join(', ')}`);
         return (item_id: number) => {
             return lookup.get(item_id) || {
                 id: item_id,
@@ -100,7 +106,7 @@ export const getItem = query.batch(num, async (item_ids: number[]) => {
             } as ItemsTable;
         };
     } catch (error: any) {
-        console.warn('Database error, using mock items data:', error.message);
+        console.error(`db.remote: getItem error for item_ids: ${item_ids.join(', ')}. Returning mock data.`, error);
         return (item_id: number) => mockItems[item_id] || {
             id: item_id,
             name: `Item #${item_id}`,
@@ -112,6 +118,7 @@ export const getItem = query.batch(num, async (item_ids: number[]) => {
 });
 
 export const getAllItems = query(async () => {
+    console.log('db.remote: getAllItems called');
     try {
         const items = await db
             .selectFrom('items')
@@ -123,14 +130,16 @@ export const getAllItems = query(async () => {
             itemsDict[item.id] = item;
         }
         
+        console.log('db.remote: getAllItems success');
         return itemsDict;
     } catch (error: any) {
-        console.warn('Database error, using mock items dictionary:', error.message);
+        console.error('db.remote: getAllItems error. Returning mock data.', error);
         return mockItems;
     }
 });
 
 export const getInventoryWithItems = query(async (id?: string) => {
+    console.log(`db.remote: getInventoryWithItems called with id: ${id}`);
     if (!id) {
         const session = await getSession();
         id = session?.user?.id || "955695820999639120";
@@ -151,14 +160,16 @@ export const getInventoryWithItems = query(async (id?: string) => {
             .where('inventory.id', '=', id)
             .execute();
         
+        console.log(`db.remote: getInventoryWithItems success for id: ${id}`);
         return inventory;
     } catch (error: any) {
-        console.warn('Database error:', error.message);
+        console.error(`db.remote: getInventoryWithItems error for id: ${id}. Returning empty array.`, error);
         return [];
     }
 });
 
 export const getUserEffects = query(async (id?: string) => {
+    console.log(`db.remote: getUserEffects called with id: ${id}`);
     if (!id) {
         const session = await getSession();
         id = session?.user?.id || "955695820999639120";
@@ -178,7 +189,7 @@ export const getUserEffects = query(async (id?: string) => {
             .where('current_effects.user_id', '=', id)
             .execute();
         
-        return effects.map(effect => {
+        const result = effects.map(effect => {
             const appliedAt = new Date(effect.applied_at).getTime();
             const durationMs = effect.duration * 30000;
             const endDate = new Date(appliedAt + durationMs);
@@ -188,14 +199,17 @@ export const getUserEffects = query(async (id?: string) => {
                 endDate: endDate.toISOString()
             };
         });
+        console.log(`db.remote: getUserEffects success for id: ${id}`);
+        return result;
     } catch (error: any) {
-        console.warn('Database error:', error.message);
+        console.error(`db.remote: getUserEffects error for id: ${id}. Returning empty array.`, error);
         return [];
     }
 });
 
 
 export const getGuild = query(str, async (id: string) => {
+    console.log(`db.remote: getGuild called with id: ${id}`);
     try {
         let info = await db
             .selectFrom('guilds')
@@ -229,13 +243,15 @@ export const getGuild = query(str, async (id: string) => {
         
         const rank = sorted.findIndex(g => g.id === id) + 1;
 
-        return {
+        const result = {
             guild_id: info.id,
             coins: info.coins,
             rank
         };
+        console.log(`db.remote: getGuild success for id: ${id}`);
+        return result;
     } catch (error: any) {
-        console.warn('Database error:', error.message);
+        console.error(`db.remote: getGuild error for id: ${id}. Returning null.`, error);
         return null;
     }
 });
