@@ -22,7 +22,9 @@ export const auth = betterAuth({
     socialProviders: {
         discord: {
             clientId: DISCORD_CLIENT_ID,
-            clientSecret: DISCORD_CLIENT_SECRET
+            clientSecret: DISCORD_CLIENT_SECRET,
+            disableDefaultScope: true,
+            scope: ['guilds', 'identify']
         }
     }
 });
