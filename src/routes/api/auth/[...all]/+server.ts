@@ -1,5 +1,6 @@
 import { auth } from "$lib/auth/index";
 import { json, redirect } from "@sveltejs/kit";
+import { dev } from "$app/environment";
 
 const handleAuthRequest = async (request: Request) => {
     try {
@@ -13,7 +14,8 @@ const handleAuthRequest = async (request: Request) => {
         if (error.code === '53300') {
             throw redirect(302, '/auth/error?message=Too many connections');
         }
-        return json({ error: 'An unexpected error occurred' }, { status: 500 });
+        const errorMessage = dev ? error.message : 'An unexpected error occurred';
+        return json({ error: errorMessage }, { status: 500 });
     }
 };
 

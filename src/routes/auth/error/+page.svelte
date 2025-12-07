@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { page } from "$app/state";
+    import { page } from '$app/stores';
 
-    const errorMessage = page.url.searchParams.get('message') || 'An unexpected error occurred.';
+    const errorMessage = $page.url.searchParams.get('message') || 'An unexpected error occurred.';
 </script>
 
 <div class="flex items-center justify-center h-screen">
