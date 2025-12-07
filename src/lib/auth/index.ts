@@ -20,7 +20,7 @@ export const auth = betterAuth({
     database: new Pool({
         connectionString,
         ssl: { rejectUnauthorized: false },
-        max: 5, // max connections
+        max: 1, // max connections
         min: 0, // completely empty
         idleTimeoutMillis: 600000, // idle connections after 10 minutes
         connectionTimeoutMillis: 10000, // oof faster if can't connect
