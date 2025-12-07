@@ -17,7 +17,14 @@ function stripSslmode(url: string) {
 const connectionString = stripSslmode(DB_URL);
 
 export const auth = betterAuth({
-    database: new Pool({ connectionString, ssl: { rejectUnauthorized: false } }),
+    database: new Pool({
+        connectionString,
+        ssl: { rejectUnauthorized: false },
+        max: 5, // max connections
+        min: 0, // completely empty
+        idleTimeoutMillis: 30000, // idle connections after 30 secs
+        connectionTimeoutMillis: 5000, // oof faster if can't connect
+    }),
     secret: AUTH_SECRET,
     socialProviders: {
         discord: {
