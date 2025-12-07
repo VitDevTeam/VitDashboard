@@ -2,6 +2,7 @@
 
 export interface UsersTable {
     id: string;
+    guild_id: string;
     coins: string;
     energy: string;
     energy_max: string;
@@ -97,10 +98,31 @@ export interface verification {
     updatedAt?: Date;
 }
 
+export interface RecipesTable {
+    id: number;
+    name: string;
+}
+
+export interface RecipeResultsTable {
+    recipe_id: number;
+    item_id: number;
+    quantity: number;
+}
+
+export interface RecipeRequireItemsTable {
+    recipe_id: number;
+    item_id: number;
+    quantity: number;
+    is_consumed: boolean;
+}
+
 export interface Database {
     users: UsersTable;
     inventory: InventoryTable;
     items: ItemsTable;
+    recipes: RecipesTable;
+    recipe_results: RecipeResultsTable;
+    recipe_require_items: RecipeRequireItemsTable;
     user_effects : user_effects;
     current_effects : current_effects;
     guilds: guilds;

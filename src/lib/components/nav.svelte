@@ -37,36 +37,38 @@
     }
 </script>
 
-<nav class="bg-white shadow-md">
-    <div class="container mx-auto px-6 py-4">
-        <div class="flex items-center justify-between">
-            <a href="/" class="text-2xl font-bold text-gray-800">
-                VIT Dashboard
-            </a>
-            
-            <div class="flex items-center gap-4">
-                {#if sessionData?.data?.user}
-                    <span class="text-gray-600">
+<aside class="w-64 bg-base-100 shadow-md flex flex-col">
+    <div class="p-4">
+        <a href="/" class="btn btn-ghost text-xl font-bold w-full">
+            VIT Dashboard
+        </a>
+    </div>
+    <ul class="menu p-4 flex-1">
+        <li><a href="/user/me" data-sveltekit-reload>Profile</a></li>
+        <li><a href="/guild">Guilds</a></li>
+    </ul>
+    <div class="p-4 border-t border-base-300">
+        <div class="flex flex-col items-center gap-4">
+            {#if sessionData?.data?.user}
+                <div class="text-center mb-2">
+                    <span class="font-semibold">
                         {sessionData.data.user.name || sessionData.data.user.email}
                     </span>
-                    <a href="/user/me" class="text-gray-600 hover:text-gray-800">
-                        Profile
-                    </a>
-                    <button
-                        onclick={handleSignOut}
-                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200"
-                    >
-                        Sign Out
-                    </button>
-                {:else}
-                    <a
-                        href="/login"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition duration-200"
-                    >
-                        Sign In
-                    </a>
-                {/if}
-            </div>
+                </div>
+                <button
+                    onclick={handleSignOut}
+                    class="btn btn-error w-full"
+                >
+                    Sign Out
+                </button>
+            {:else}
+                <a
+                    href="/login"
+                    class="btn btn-primary w-full"
+                >
+                    Sign In
+                </a>
+            {/if}
         </div>
     </div>
-</nav>
+</aside>

@@ -1,11 +1,13 @@
 import { query } from '$app/server';
 import { db } from "$lib/db/index";
 import type { UsersTable, InventoryTable, ItemsTable } from "$lib/db/types";
-import { num, str } from "$lib/validation";
+import { leaderboardParams, num, str } from "$lib/validation";
 import { getSession } from "$lib/auth/session";
+import { startBot } from '$lib/bot';
 
 const mockUserStat: UsersTable = {
     id: "955695820999639120",
+    guild_id: "mock_guild",
     coins: "100000",
     energy: "54",
     energy_max: "100",
@@ -101,7 +103,7 @@ export const getItem = query.batch(num, async (item_ids: number[]) => {
                 id: item_id,
                 name: `Item #${item_id}`,
                 description: "Unknown item",
-                icon: "📦",
+                icon: ":)",
                 is_usable: false
             } as ItemsTable;
         };
@@ -111,7 +113,7 @@ export const getItem = query.batch(num, async (item_ids: number[]) => {
             id: item_id,
             name: `Item #${item_id}`,
             description: "Unknown item",
-            icon: "📦",
+            icon: ":)",
             is_usable: false
         } as ItemsTable;
     }
@@ -207,7 +209,68 @@ export const getUserEffects = query(async (id?: string) => {
     }
 });
 
+export const getLocalCoinsLeaderboard = query(leaderboardParams, async (params) => {
+    const { id, top, order } = params;
+    console.log(`db.remote: getLocalCoinsLeaderboard called with id: ${id}, top: ${top}, order: ${order}`);
+    try {
+        const guild = (await startBot()).guilds.cache.get(id);
+        if (!guild) {
+            console.error(`db.remote: Guild with id ${id} not found.`);
+            return [];
+        }
 
+        // Paginated fetch to avoid timeouts
+        const allMemberIds = [];
+        let lastId;
+        while (true) {
+            // @ts-ignore - Linter may be incorrect about the 'after' property
+            const fetchedMembers = await guild.members.fetch({ limit: 1000, after: lastId });
+            if (fetchedMembers.size === 0) {
+                break;
+            }
+            fetchedMembers.forEach(member => allMemberIds.push(member.id));
+            lastId = fetchedMembers.lastKey();
+            if (fetchedMembers.size < 1000) {
+                break;
+            }
+        }
+
+        if (allMemberIds.length === 0) {
+            return [];
+        }
+
+        // Fetch all users from the database in a single query
+        const users = await db
+            .selectFrom('users')
+            .select(['id', 'coins'])
+            .where('id', 'in', allMemberIds)
+            .execute();
+
+        // In-memory sort
+        const sorted = users.sort((a, b) => {
+            const coinsA = BigInt(a.coins);
+            const coinsB = BigInt(b.coins);
+            if (order === 'desc') {
+                return coinsB > coinsA ? 1 : coinsB < coinsA ? -1 : 0;
+            }
+            return coinsA > coinsB ? 1 : coinsA < coinsB ? -1 : 0;
+        });
+
+        const topUsers = sorted.slice(0, top);
+
+        const result = topUsers.map((user, index) => ({
+            user_id: user.id,
+            coins: user.coins,
+            pos: index + 1
+        }));
+
+        console.log(`db.remote: getLocalCoinsLeaderboard success for id: ${id}`);
+        return result;
+    } catch (error: any) {
+        console.error(`db.remote: getLocalCoinsLeaderboard error for id: ${id}. Returning empty array.`, error);
+        return [];
+    }
+});
 export const getGuild = query(str, async (id: string) => {
     console.log(`db.remote: getGuild called with id: ${id}`);
     try {

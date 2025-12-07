@@ -21,7 +21,7 @@ export const getUserDiscord = query(async (id?: string) => {
         return [{
             id: id,
             username: "youngcoder45",
-            globalName: "Aditya ✧ YC45",
+            globalName: "Aditya YC45",
             discriminator: "0",
             avatar: "cf296ec1b2af5b10746bb89dbd24fc38",
             avatarURL: "https://cdn.discordapp.com/avatars/955695820999639120/cf296ec1b2af5b10746bb89dbd24fc38.webp",
@@ -90,6 +90,23 @@ export const getDiscordGuild = query(str, async (guildId: string) => {
         return result;
     } catch (error: any) {
         console.error(`discord.remote: getDiscordGuild error for guildId: ${guildId}. Returning null.`, error);
+        return null;
+    }
+});
+
+export const getDiscordUser = query(str, async (userId: string) => {
+    console.log(`discord.remote: getDiscordUser called with userId: ${userId}`);
+    try {
+        const user = await bot.users.fetch(userId);
+        const result = {
+            id: user.id,
+            name: user.username,
+            avatarURL: user.avatarURL()
+        };
+        console.log(`discord.remote: getDiscordUser success for userId: ${userId}`);
+        return result;
+    } catch (error: any) {
+        console.error(`discord.remote: getDiscordUser error for userId: ${userId}. Returning null.`, error);
         return null;
     }
 });

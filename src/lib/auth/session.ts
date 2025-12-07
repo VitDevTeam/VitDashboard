@@ -8,9 +8,8 @@ const TEST_USER_ID = "955695820999639120";
 
 export async function getSession(event?: any) {
     console.log('getSession: starting');
-        if (env.BYPASS_AUTH === "true") {
+    if (env.BYPASS_AUTH === "true") {
         console.log('getSession: BYPASS_AUTH is true, returning test user');
-        
         return {
             session: {
                 userId: TEST_USER_ID,
@@ -24,16 +23,17 @@ export async function getSession(event?: any) {
         };
     }
 
-        if (!event) {
-        console.log('getSession: event is null, getting request event');
-        event = getRequestEvent();
+    const e = event ?? getRequestEvent();
+    if (!e) {
+        console.error('getSession: Unable to get request event');
+        throw error(500, "Unable to get request event");
     }
 
     let headers: Headers | undefined;
-    if (event?.request?.headers) {
-        headers = event.request.headers;
-    } else if (event?.cookies?.getAll) {
-        const all = event.cookies.getAll();
+    if (e.request?.headers) {
+        headers = e.request.headers;
+    } else if (e.cookies?.getAll) {
+        const all = e.cookies.getAll();
         const cookie = all.map((c: any) => `${c.name}=${encodeURIComponent(c.value)}`).join('; ');
         headers = new Headers({ cookie });
     }

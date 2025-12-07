@@ -1,5 +1,4 @@
 <script>
-    import Nav from "$lib/components/nav.svelte";
     import { onMount } from "svelte";
     
     let { data, form } = $props();
@@ -9,90 +8,83 @@
     });
 </script>
 
-<Nav />
-
 {#if data}
-    <div class="min-h-screen bg-gradient-to-br from-lavender-100 to-cyan-50 p-6" style="background: linear-gradient(135deg, #e6e6fa 0%, #e0ffff 100%);">
+    <div class="min-h-screen bg-base-200 p-6">
         <div class="container mx-auto">
             <div class="mb-6">
-                <h1 class="text-3xl font-bold text-gray-800">Guild Settings</h1>
+                <h1 class="text-3xl font-bold">Guild Settings</h1>
                 {#if data.guild}
                     <div class="flex items-center gap-3 mt-2">
-                        {#if data.guild.iconURL}
-                            <img src={data.guild.iconURL} alt={data.guild.name} class="w-12 h-12 rounded-full" />
-                        {/if}
-                        <p class="text-xl text-gray-600">{data.guild.name}</p>
+                        <div class="avatar">
+                            <div class="w-12 rounded-full">
+                                {#if data.guild.iconURL}
+                                    <img src={data.guild.iconURL} alt={data.guild.name} />
+                                {/if}
+                            </div>
+                        </div>
+                        <p class="text-xl">{data.guild.name}</p>
                     </div>
                 {/if}
             </div>
 
-        {#if form?.success}
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                Settings saved successfully!
-            </div>
-        {/if}
+            {#if form?.success}
+                <div class="alert alert-success shadow-lg mb-4">
+                    <div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>Settings saved successfully!</span>
+                    </div>
+                </div>
+            {/if}
 
-        <form method="POST" class="bg-white rounded-lg border border-gray-300 p-6">
-        <fieldset>
-            <legend class="text-xl font-bold mb-4">Bot Configuration</legend>
-            
-            <div class="mb-6">
-                <label for="prefix" class="block font-bold mb-2">Command Prefix</label>
-                <p class="text-gray-600 text-sm mb-2">
-                    The character(s) used to trigger bot commands (e.g., if prefix is "!" then use !ping)
-                </p>
-                <input 
-                    type="text" 
-                    maxlength="5" 
-                    id="prefix" 
-                    name="prefix" 
-                    value={data.config.prefix} 
-                    required
-                    class="border border-gray-300 rounded px-3 py-2 w-32"
-                />
-            </div>
-
-            <div class="mb-6">
-                <fieldset>
-                    <legend class="block font-bold mb-2">Allow Robbing</legend>
-                    <p class="text-gray-600 text-sm mb-2">
-                        Enable or disable the rob command in your server
-                    </p>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2">
-                            <input 
-                                type="radio" 
-                                name="allow_rob" 
-                                value="true" 
-                                checked={data.config.allow_rob}
-                            /> 
-                            <span>Yes</span>
+            <form method="POST" class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title">Bot Configuration</h2>
+                    
+                    <div class="form-control w-full max-w-xs">
+                        <label class="label" for="prefix">
+                            <span class="label-text">Command Prefix</span>
                         </label>
-                        <label class="flex items-center gap-2">
-                            <input 
-                                type="radio" 
-                                name="allow_rob" 
-                                value="false" 
-                                checked={!data.config.allow_rob}
-                            /> 
-                            <span>No</span>
+                        <input 
+                            type="text" 
+                            maxlength="5" 
+                            id="prefix" 
+                            name="prefix" 
+                            value={data.config.prefix} 
+                            required
+                            class="input input-bordered w-full max-w-xs"
+                        />
+                        <label class="label" for="prefix">
+                            <span class="label-text-alt">The character(s) used to trigger bot commands (e.g., if prefix is "!" then use !ping)</span>
                         </label>
                     </div>
-                </fieldset>
-            </div>
 
-                <button 
-                    type="submit"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded"
-                >
-                    Save Settings
-                    </button>
-                </fieldset>
+                    <div class="form-control">
+                        <label class="label cursor-pointer" for="allow_rob">
+                            <span class="label-text">Allow Robbing</span> 
+                            <input 
+                                type="checkbox" 
+                                name="allow_rob" 
+                                id="allow_rob"
+                                class="toggle" 
+                                checked={data.config.allow_rob} 
+                            />
+                        </label>
+                        <label class="label" for="allow_rob">
+                            <span class="label-text-alt">Enable or disable the rob command in your server</span>
+                        </label>
+                    </div>
+
+                    <div class="card-actions justify-end">
+                        <button type="submit" class="btn btn-primary">
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
 {:else}
     <div class="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+        <span class="loading loading-spinner loading-lg"></span>
     </div>
 {/if}
