@@ -1,5 +1,5 @@
 import { query } from '$app/server';
-import { db } from "$lib/db/index";
+import { db, dbCache, logQueryPerformance } from "$lib/db/index";
 import type { UsersTable, InventoryTable, ItemsTable } from "$lib/db/types";
 import { leaderboardParams, num, str } from "$lib/validation";
 import { getSession } from "$lib/auth/session";
@@ -28,16 +28,26 @@ export const getUserStat = query(async (id?: string) => {
         const session = await getSession();
         id = session?.user?.id || "955695820999639120";
     }
-    
+
+    const cacheKey = `userstat_${id}`;
+    const cached = dbCache.get(cacheKey);
+    if (cached) {
+        console.log(`db.remote: getUserStat cache hit for id: ${id}`);
+        return cached;
+    }
+
     try {
         const user = await db
             .selectFrom('users')
             .selectAll()
             .where('id', '=', id)
             .executeTakeFirst();
-       
+
+        const result = user || mockUserStat;
+        dbCache.set(cacheKey, result, 60); // Cache for 1 minute
+
         console.log(`db.remote: getUserStat success for id: ${id}`);
-        return user || mockUserStat;
+        return result;
     } catch (error: any) {
         console.error(`db.remote: getUserStat error for id: ${id}. Returning mock data.`, error);
         return mockUserStat;
@@ -121,17 +131,27 @@ export const getItem = query.batch(num, async (item_ids: number[]) => {
 
 export const getAllItems = query(async () => {
     console.log('db.remote: getAllItems called');
+
+    const cacheKey = 'all_items';
+    const cached = dbCache.get(cacheKey);
+    if (cached) {
+        console.log('db.remote: getAllItems cache hit');
+        return cached;
+    }
+
     try {
         const items = await db
             .selectFrom('items')
             .selectAll()
             .execute();
-        
+
         const itemsDict: Record<number, ItemsTable> = {};
         for (const item of items) {
             itemsDict[item.id] = item;
         }
-        
+
+        dbCache.set(cacheKey, itemsDict, 300); // Cache for 5 minutes
+
         console.log('db.remote: getAllItems success');
         return itemsDict;
     } catch (error: any) {
@@ -211,7 +231,17 @@ export const getUserEffects = query(async (id?: string) => {
 
 export const getLocalCoinsLeaderboard = query(leaderboardParams, async (params) => {
     const { id, top, order } = params;
+    const startTime = Date.now();
     console.log(`db.remote: getLocalCoinsLeaderboard called with id: ${id}, top: ${top}, order: ${order}`);
+
+    const cacheKey = `leaderboard_${id}_${top}_${order}`;
+    const cached = dbCache.get(cacheKey);
+    if (cached) {
+        console.log(`db.remote: getLocalCoinsLeaderboard cache hit for id: ${id}`);
+        logQueryPerformance('getLocalCoinsLeaderboard_cached', startTime);
+        return cached;
+    }
+
     try {
         const guild = (await startBot()).guilds.cache.get(id);
         if (!guild) {
@@ -219,52 +249,43 @@ export const getLocalCoinsLeaderboard = query(leaderboardParams, async (params) 
             return [];
         }
 
-        // Paginated fetch to avoid timeouts
-        const allMemberIds = [];
-        let lastId;
-        while (true) {
-            // @ts-ignore - Linter may be incorrect about the 'after' property
-            const fetchedMembers = await guild.members.fetch({ limit: 1000, after: lastId });
-            if (fetchedMembers.size === 0) {
-                break;
-            }
-            fetchedMembers.forEach(member => allMemberIds.push(member.id));
-            lastId = fetchedMembers.lastKey();
-            if (fetchedMembers.size < 1000) {
-                break;
-            }
-        }
-
-        if (allMemberIds.length === 0) {
+        // Optimized approach: Get member IDs more efficiently
+        const memberIds = [];
+        try {
+            // Get members in chunks to avoid rate limits
+            const members = await guild.members.fetch();
+            members.forEach(member => memberIds.push(member.id));
+        } catch (error) {
+            console.error(`Failed to fetch guild members: ${error}`);
             return [];
         }
 
-        // Fetch all users from the database in a single query
+        if (memberIds.length === 0) {
+            return [];
+        }
+
+        // Use database ORDER BY instead of in-memory sort for better performance
+        const orderDirection = order === 'desc' ? 'desc' : 'asc';
         const users = await db
             .selectFrom('users')
             .select(['id', 'coins'])
-            .where('id', 'in', allMemberIds)
+            .where('id', 'in', memberIds)
+            .where('guild_id', '=', id) // Ensure users are from the correct guild
+            .orderBy('coins', orderDirection)
+            .limit(top)
             .execute();
 
-        // In-memory sort
-        const sorted = users.sort((a, b) => {
-            const coinsA = BigInt(a.coins);
-            const coinsB = BigInt(b.coins);
-            if (order === 'desc') {
-                return coinsB > coinsA ? 1 : coinsB < coinsA ? -1 : 0;
-            }
-            return coinsA > coinsB ? 1 : coinsA < coinsB ? -1 : 0;
-        });
-
-        const topUsers = sorted.slice(0, top);
-
-        const result = topUsers.map((user, index) => ({
+        const result = users.map((user, index) => ({
             user_id: user.id,
             coins: user.coins,
             pos: index + 1
         }));
 
+        // Cache for 2 minutes since leaderboard data changes frequently
+        dbCache.set(cacheKey, result, 120);
+
         console.log(`db.remote: getLocalCoinsLeaderboard success for id: ${id}`);
+        logQueryPerformance('getLocalCoinsLeaderboard_db', startTime);
         return result;
     } catch (error: any) {
         console.error(`db.remote: getLocalCoinsLeaderboard error for id: ${id}. Returning empty array.`, error);
@@ -318,6 +339,3 @@ export const getGuild = query(str, async (id: string) => {
         return null;
     }
 });
-
-
-

@@ -2,7 +2,7 @@
     /** @type {import('./$types').PageProps} */
     let { data } = $props();
     let { info } = data;
-
+    import Leaderboard from '$lib/components/Leaderboard.svelte';
     import { getDiscordGuild, getDiscordUser } from '$lib/remote/discord.remote';
     let dc_info = await getDiscordGuild(info.guild_id);
     let owner = await getDiscordUser(dc_info.ownerId);
@@ -46,6 +46,7 @@
         </div>
     </div>
 
+    <Leaderboard guildId={info.guild_id}/>
     <div class="card card-compact bg-base-100 shadow-xl border border-base-300">
         <div class="card-body p-6 flex-row justify-between items-center">
             <h3 class="card-title">Administration</h3>

@@ -1,25 +1,36 @@
 <script>
     import { getLocalCoinsLeaderboard } from '$lib/remote/db.remote';
     import { getDiscordUser } from '$lib/remote/discord.remote';
+    import { onMount } from 'svelte';
 
     export let guildId;
 
-    let leaderboard = getLocalCoinsLeaderboard({ id: guildId, top: 10 });
+    let enrichedLeaderboardPromise;
 
-    async function enrichLeaderboard(data) {
-        const enrichedData = await Promise.all(
-            data.map(async (entry) => {
-                const user = await getDiscordUser(entry.user_id);
-                return {
-                    ...entry,
-                    user,
-                };
-            })
-        );
-        return enrichedData;
+    async function loadLeaderboard() {
+        try {
+            const leaderboard = await getLocalCoinsLeaderboard({ id: guildId, top: 10 });
+
+            const enrichedData = await Promise.all(
+                leaderboard.map(async (entry) => {
+                    const user = await getDiscordUser(entry.user_id);
+                    return {
+                        ...entry,
+                        user,
+                    };
+                })
+            );
+
+            return enrichedData;
+        } catch (error) {
+            console.error('Error loading leaderboard:', error);
+            throw error;
+        }
     }
 
-    let enrichedLeaderboardPromise = leaderboard.then(enrichLeaderboard);
+    onMount(() => {
+        enrichedLeaderboardPromise = loadLeaderboard();
+    });
 </script>
 
 <div class="card mt-6">

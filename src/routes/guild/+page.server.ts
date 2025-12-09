@@ -13,7 +13,7 @@ export async function load() {
         try {
             const member = await guild.members.fetch(userId);
             
-            if (member && guild.ownerId === userId) {
+            if (member ) {
                 userGuilds.push({
                     id: guild.id,
                     name: guild.name,

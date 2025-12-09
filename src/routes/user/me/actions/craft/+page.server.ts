@@ -1,32 +1,34 @@
 import { db } from '$lib/db/index';
-import { fail } from '@sveltejs/kit';
+import { fail, type RequestEvent } from '@sveltejs/kit';
 import { getSession } from '$lib/auth/session';
-import type { PageServerLoad, Actions } from './$types';
+import type { ServerLoad, Actions } from '@sveltejs/kit';
 
-export const load: PageServerLoad = async ({ locals }) => {
-    // Get craftable items
-    const craftableItems = await db
+export const load: ServerLoad = async (event) => {
+    const session = await getSession(event);
+
+    // Optimized single query to get craftable items with user's inventory in one go
+    const craftableItemsWithInventory = await db
         .selectFrom('items as i')
         .distinctOn('i.id')
         .select(['i.id', 'i.name', 'i.icon'])
+        .leftJoin('inventory as inv', (join) =>
+            join.onRef('inv.item_id', '=', 'i.id')
+                .on('inv.id', '=', session.user.id)
+        )
+        .select(['inv.quantity as user_quantity'])
         .innerJoin('recipe_results as rr', 'i.id', 'rr.item_id')
         .orderBy('i.id')
         .orderBy('i.name')
         .execute();
 
-    // Get user inventory
-    const session = await getSession(locals?.event);
-    const userInventory = await db
-        .selectFrom('inventory')
-        .select(['item_id', 'quantity'])
-        .where('id', '=', session.user.id)
-        .execute();
-
     // Create inventory map for easy lookup
     const inventoryMap = new Map();
-    userInventory.forEach(item => {
-        inventoryMap.set(item.item_id, item.quantity);
+    craftableItemsWithInventory.forEach(item => {
+        inventoryMap.set(item.id, item.user_quantity || 0);
     });
+
+    // Extract craftable items without inventory data
+    const craftableItems = craftableItemsWithInventory.map(({ user_quantity, ...item }) => item);
 
     return { craftableItems, inventoryMap };
 };
