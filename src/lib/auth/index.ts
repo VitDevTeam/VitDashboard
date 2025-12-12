@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { Pool } from "pg";
 import { DB_URL, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, AUTH_SECRET } from "$env/static/private";
+import { dev } from "$app/environment";
 
 function stripSslmode(url: string) {
     try {
@@ -34,5 +35,24 @@ export const auth = betterAuth({
             scope: ['guilds', 'identify'],
             disableImplicitSignUp: true,
         }
-    }
+    },
+    advanced: {
+        cookiePrefix: "vitapp",
+        crossSubDomainCookies: {
+            enabled: false,
+        },
+        defaultCookieOptions: {
+            sameSite: "lax",
+            secure: !dev,
+            httpOnly: true,
+        },
+        useSecureCookies: !dev,
+    },
+    account: {
+        accountLinking: {
+            enabled: true,
+            trustedProviders: ["discord"],
+        },
+        skipStateCookieCheck: dev,
+    },
 });
