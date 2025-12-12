@@ -61,7 +61,7 @@
         <label for="item-select" class="block text-sm font-medium mb-2">Choose item:</label>
         <select 
             id="item-select"
-            class="w-full p-2 border border-gray-300 rounded"
+            class="w-full p-2 border rounded"
             value={selectedItemId}
             onchange={handleItemChange}
         >
@@ -86,7 +86,7 @@
                 }}
             >
                 <input type="hidden" name="itemId" value={selectedItemId} />
-                <button type="submit" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" disabled={loadingRecipes}>
+                <button type="submit" class="mt-2 px-4 py-2 bg-blue-500 rounded hover:bg-blue-600" disabled={loadingRecipes}>
                     {loadingRecipes ? 'Loading...' : 'View Recipes'}
                 </button>
             </form>

@@ -4,5 +4,5 @@
 @plugin "daisyui";
 
 body {
-  @apply font-sans;
+  font-family: 'Aldrich', monospace;
 }

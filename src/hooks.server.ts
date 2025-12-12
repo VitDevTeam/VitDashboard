@@ -5,5 +5,12 @@ if (env.BYPASS_AUTH === "true") {
 }
 
 export async function handle({ event, resolve }) {
-    return resolve(event);
+    const theme = event.cookies.get('theme') || 'dark';
+    event.locals.theme = theme;
+
+    return resolve(event, {
+        transformPageChunk: ({ html }) => {
+            return html.replace('data-theme="dark"', `data-theme="${theme}"`);
+        }
+    });
 }

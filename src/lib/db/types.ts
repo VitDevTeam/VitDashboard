@@ -116,6 +116,15 @@ export interface RecipeRequireItemsTable {
     is_consumed: boolean;
 }
 
+export interface TradesTable {
+    id: number;
+    offerer_id: string;
+    item_id: number;
+    quantity: number;
+    price: number;
+    created_at: Date;
+}
+
 export interface Database {
     users: UsersTable;
     inventory: InventoryTable;
@@ -123,6 +132,7 @@ export interface Database {
     recipes: RecipesTable;
     recipe_results: RecipeResultsTable;
     recipe_require_items: RecipeRequireItemsTable;
+    trades: TradesTable;
     user_effects : user_effects;
     current_effects : current_effects;
     guilds: guilds;

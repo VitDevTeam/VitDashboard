@@ -119,7 +119,7 @@ export const actions: Actions = {
                         await trx
                             .updateTable('inventory')
                             .set((eb) => ({
-                                quantity: eb('quantity', '-', needed)
+                                quantity: eb('inventory.quantity', '-', needed)
                             }))
                             .where('id', '=', session.user.id)
                             .where('item_id', '=', req.id)
@@ -151,7 +151,7 @@ export const actions: Actions = {
                         .onConflict((oc) => oc
                             .columns(['id', 'item_id'])
                             .doUpdateSet((eb) => ({
-                                quantity: eb('quantity', '+', totalQuantity)
+                                quantity: eb('inventory.quantity', '+', totalQuantity)
                             }))
                         )
                         .execute();

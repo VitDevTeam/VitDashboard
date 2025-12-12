@@ -1,7 +1,7 @@
 import { query } from '$app/server';
 import { db, dbCache, logQueryPerformance } from "$lib/db/index";
 import type { UsersTable, InventoryTable, ItemsTable } from "$lib/db/types";
-import { leaderboardParams, num, str } from "$lib/validation";
+import { leaderboardParams, num, str, buyMarketParams, marketListingsParams } from "$lib/validation";
 import { getSession } from "$lib/auth/session";
 import { startBot } from '$lib/bot';
 
@@ -300,13 +300,13 @@ export const getGuild = query(str, async (id: string) => {
             .selectAll()
             .where('id', '=', id)
             .executeTakeFirst();
-        
+
         if (!info) {
             await db
                 .insertInto('guilds')
                 .values({ id })
                 .execute();
-            
+
             info = await db
                 .selectFrom('guilds')
                 .selectAll()
@@ -318,13 +318,13 @@ export const getGuild = query(str, async (id: string) => {
             .selectFrom('guilds')
             .select(['id', 'coins'])
             .execute();
-        
+
         const sorted = allGuilds.sort((a, b) => {
             const coinsA = BigInt(a.coins);
             const coinsB = BigInt(b.coins);
             return coinsB > coinsA ? 1 : coinsB < coinsA ? -1 : 0;
         });
-        
+
         const rank = sorted.findIndex(g => g.id === id) + 1;
 
         const result = {
@@ -337,5 +337,214 @@ export const getGuild = query(str, async (id: string) => {
     } catch (error: any) {
         console.error(`db.remote: getGuild error for id: ${id}. Returning null.`, error);
         return null;
+    }
+});
+
+export const getMarketListings = query(marketListingsParams, async (params) => {
+    const { search, category, page, limit } = params;
+    console.log('db.remote: getMarketListings called with params:', { search, category, page, limit });
+
+    try {
+        let query = db
+            .selectFrom('trades')
+            .innerJoin('items', 'trades.item_id', 'items.id')
+            .select([
+                'trades.id',
+                'trades.offerer_id',
+                'trades.item_id',
+                'trades.quantity',
+                'trades.price',
+                'trades.created_at',
+                'items.name',
+                'items.description',
+                'items.icon',
+                'items.is_usable'
+            ]);
+
+        if (search && search.trim()) {
+            query = query.where('items.name', 'ilike', `%${search.trim()}%`);
+        }
+
+        if (category && category !== 'all') {
+            const isUsable = category === 'Usable';
+            query = query.where('items.is_usable', '=', isUsable);
+        }
+
+        let countQuery = db
+            .selectFrom('trades')
+            .innerJoin('items', 'trades.item_id', 'items.id')
+            .select((eb) => eb.fn.count('trades.id').as('count'));
+
+        if (search && search.trim()) {
+            countQuery = countQuery.where('items.name', 'ilike', `%${search.trim()}%`);
+        }
+
+        if (category && category !== 'all') {
+            const isUsable = category === 'Usable';
+            countQuery = countQuery.where('items.is_usable', '=', isUsable);
+        }
+
+        const totalCount = await countQuery.executeTakeFirst();
+
+        const offset = (page - 1) * limit;
+        const trades = await query
+            .orderBy('trades.created_at', 'desc')
+            .limit(limit)
+            .offset(offset)
+            .execute();
+
+        console.log('db.remote: getMarketListings found', trades.length, 'trades out of', totalCount?.count || 0);
+
+        const sellerUsernames = new Map();
+        try {
+            const bot = await startBot();
+            for (const trade of trades) {
+                try {
+                    const user = await bot.users.fetch(trade.offerer_id);
+                    sellerUsernames.set(trade.offerer_id, user.username || user.globalName || 'Unknown');
+                } catch {
+                    sellerUsernames.set(trade.offerer_id, 'Unknown');
+                }
+            }
+        } catch {
+            trades.forEach(trade => sellerUsernames.set(trade.offerer_id, 'Unknown'));
+        }
+
+        const marketItems = trades.map(trade => ({
+            id: trade.id,
+            trade_id: trade.id,
+            name: trade.name,
+            description: trade.description,
+            icon: trade.icon,
+            price: trade.price,
+            stock: trade.quantity,
+            category: trade.is_usable ? 'Usable' : 'Non usable',
+            seller_id: trade.offerer_id,
+            seller_name: sellerUsernames.get(trade.offerer_id) || 'Unknown'
+        }));
+
+        const result = {
+            items: marketItems,
+            total: Number(totalCount?.count || 0),
+            page,
+            limit,
+            totalPages: Math.ceil(Number(totalCount?.count || 0) / limit)
+        };
+
+        console.log('db.remote: getMarketListings returning page', page, 'of', result.totalPages);
+        return result;
+    } catch (error) {
+        console.error('db.remote: getMarketListings error:', error);
+        return { items: [], total: 0, page: 1, limit: 10, totalPages: 0 };
+    }
+});
+
+export const buyMarketItem = query(buyMarketParams, async (params) => {
+    const { userId, itemId: tradeId, quantity } = params;
+
+    if (quantity <= 0) {
+        throw new Error('Quantity must be positive');
+    }
+
+    try {
+        return await db.transaction().execute(async (trx) => {
+            const trade = await trx
+                .selectFrom('trades')
+                .selectAll()
+                .where('id', '=', tradeId)
+                .executeTakeFirst();
+
+            if (!trade) {
+                throw new Error('Trade not found');
+            }
+
+            if (trade.quantity < quantity) {
+                throw new Error('Not enough stock available');
+            }
+
+            if (trade.offerer_id === userId) {
+                throw new Error('You cannot buy your own trade');
+            }
+
+            const totalCost = trade.price * quantity;
+
+            const buyer = await trx
+                .selectFrom('users')
+                .selectAll()
+                .where('id', '=', userId)
+                .executeTakeFirst();
+
+            if (!buyer) {
+                throw new Error('Buyer not found');
+            }
+
+            const buyerCoins = BigInt(buyer.coins);
+            if (buyerCoins < BigInt(totalCost)) {
+                throw new Error('Not enough coins');
+            }
+
+            const seller = await trx
+                .selectFrom('users')
+                .selectAll()
+                .where('id', '=', trade.offerer_id)
+                .executeTakeFirst();
+
+            if (!seller) {
+                throw new Error('Seller not found');
+            }
+
+            await trx
+                .updateTable('users')
+                .set({ coins: (buyerCoins - BigInt(totalCost)).toString() })
+                .where('id', '=', userId)
+                .execute();
+
+            await trx
+                .updateTable('users')
+                .set({ coins: (BigInt(seller.coins) + BigInt(totalCost)).toString() })
+                .where('id', '=', trade.offerer_id)
+                .execute();
+
+            const newQuantity = trade.quantity - quantity;
+            if (newQuantity <= 0) {
+                await trx
+                    .deleteFrom('trades')
+                    .where('id', '=', tradeId)
+                    .execute();
+            } else {
+                await trx
+                    .updateTable('trades')
+                    .set({ quantity: newQuantity })
+                    .where('id', '=', tradeId)
+                    .execute();
+            }
+
+            await trx
+                .insertInto('inventory')
+                .values({
+                    id: userId,
+                    item_id: trade.item_id,
+                    quantity: quantity
+                })
+                .onConflict((oc) => oc
+                    .columns(['id', 'item_id'])
+                    .doUpdateSet((eb) => ({
+                        quantity: eb('inventory.quantity', '+', quantity)
+                    }))
+                )
+                .execute();
+
+            const item = await trx
+                .selectFrom('items')
+                .select('name')
+                .where('id', '=', trade.item_id)
+                .executeTakeFirst();
+
+            const itemName = item?.name || `Item #${trade.item_id}`;
+
+            return { success: true, message: `Bought ${quantity}x ${itemName} for ${totalCost} coins` };
+        });
+    } catch (error) {
+        throw error;
     }
 });

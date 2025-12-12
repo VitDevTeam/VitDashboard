@@ -12,9 +12,10 @@ module.exports = {
   daisyui: {
     themes: [
       'light',
-      'dark'
+      'dark',
+      'cerberus'
     ],
-    
+
   },
   // Optimize for production
   future: {
