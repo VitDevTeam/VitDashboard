@@ -9,20 +9,11 @@ const handleAuthRequest = async (request: Request) => {
         const response = await auth.handler(request);
         console.log(`[${request.method}] ${request.url} - auth.handler responded with status: ${response.status}.`);
 
-        // Clone response and add universal cache control headers for all hosting platforms
+        // Clone response and add standard cache control headers
         const responseHeaders = new Headers(response.headers);
-        responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+        responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
         responseHeaders.set('Pragma', 'no-cache');
         responseHeaders.set('Expires', '0');
-        // Universal CDN headers
-        responseHeaders.set('Surrogate-Control', 'no-store');
-        responseHeaders.set('CDN-Cache-Control', 'no-store');
-        // Platform-specific headers
-        responseHeaders.set('Netlify-CDN-Cache-Control', 'no-store');
-        responseHeaders.set('Vercel-CDN-Cache-Control', 'no-store');
-        responseHeaders.set('Cloudflare-CDN-Cache-Control', 'no-store');
-        responseHeaders.set('Fastly-CDN-Cache-Control', 'no-store');
-        responseHeaders.set('Akamai-Cache-Control', 'no-store');
 
         return new Response(response.body, {
             status: response.status,
@@ -42,16 +33,9 @@ const handleAuthRequest = async (request: Request) => {
         return json({ error: errorMessage }, {
             status: 500,
             headers: {
-                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
                 'Pragma': 'no-cache',
-                'Expires': '0',
-                'Surrogate-Control': 'no-store',
-                'CDN-Cache-Control': 'no-store',
-                'Netlify-CDN-Cache-Control': 'no-store',
-                'Vercel-CDN-Cache-Control': 'no-store',
-                'Cloudflare-CDN-Cache-Control': 'no-store',
-                'Fastly-CDN-Cache-Control': 'no-store',
-                'Akamai-Cache-Control': 'no-store'
+                'Expires': '0'
             }
         });
     }

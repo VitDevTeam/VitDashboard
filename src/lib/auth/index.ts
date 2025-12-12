@@ -27,6 +27,7 @@ export const auth = betterAuth({
         connectionTimeoutMillis: 10000, // oof faster if can't connect
     }),
     secret: AUTH_SECRET,
+    trustedOrigins: ["*"], // Allow all origins - more native approach
     socialProviders: {
         discord: {
             clientId: DISCORD_CLIENT_ID,
@@ -44,5 +45,6 @@ export const auth = betterAuth({
             path: "/", // Ensure cookies work across the entire domain
         },
         useSecureCookies: !dev, // Use secure cookies in production
+        disableOriginCheck: true, // Native way to disable origin validation
     }
 });
