@@ -9,22 +9,9 @@ export default defineConfig({
 			overlay: false
 		}
 	},
-	build: {
-		rollupOptions: {
-			output: {
-				manualChunks: {
-					// Split vendor chunks for better caching
-					vendor: ['svelte'],
-					auth: ['better-auth', '@auth/core', '@auth/sveltekit'],
-					discord: ['discord.js'],
-					ui: ['daisyui', '@tailwindcss/forms', '@tailwindcss/typography'],
-					db: ['kysely', 'kysely-postgres-js', 'postgres', 'pg']
-				}
-			}
-		}
-	},
+	
 	optimizeDeps: {
 		include: ['svelte', '@sveltejs/kit', 'better-auth'],
-		exclude: ['emoji-datasource'] // Exclude heavy emoji library from pre-bundling
+		exclude: ['emoji-datasource'] 
 	}
 });
