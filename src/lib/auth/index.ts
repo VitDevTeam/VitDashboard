@@ -31,7 +31,8 @@ export const auth = betterAuth({
             clientId: DISCORD_CLIENT_ID,
             clientSecret: DISCORD_CLIENT_SECRET,
             disableDefaultScope: true,
-            scope: ['guilds', 'identify']
+            scope: ['guilds', 'identify'],
+            disableImplicitSignUp: true,
         }
     }
 });
