@@ -14,7 +14,7 @@ export default defineConfig({
 			output: {
 				manualChunks: {
 					// Split vendor chunks for better caching
-					vendor: ['svelte', '@sveltejs/kit'],
+					vendor: ['svelte'],
 					auth: ['better-auth', '@auth/core', '@auth/sveltekit'],
 					discord: ['discord.js'],
 					ui: ['daisyui', '@tailwindcss/forms', '@tailwindcss/typography'],
