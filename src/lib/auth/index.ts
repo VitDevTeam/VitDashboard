@@ -39,9 +39,10 @@ export const auth = betterAuth({
     advanced: {
         defaultCookieOptions: {
             sameSite: "lax",
-            secure: !dev, // Secure cookie in production , not secure in dev
+            secure: !dev, // Secure cookies in production (HTTPS), not in development
             httpOnly: true,
+            path: "/", // Ensure cookies work across the entire domain
         },
-        useSecureCookies: !dev, // secure cookies in prod
+        useSecureCookies: !dev, // Use secure cookies in production
     }
 });
