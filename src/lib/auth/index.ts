@@ -1,7 +1,6 @@
 import { betterAuth } from "better-auth";
 import { Pool } from "pg";
 import { DB_URL, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, AUTH_SECRET } from "$env/static/private";
-import { dev } from "$app/environment";
 
 function stripSslmode(url: string) {
     try {
@@ -27,7 +26,6 @@ export const auth = betterAuth({
         connectionTimeoutMillis: 10000, // oof faster if can't connect
     }),
     secret: AUTH_SECRET,
-    trustedOrigins: ["*"], // Allow all origins - more native approach
     socialProviders: {
         discord: {
             clientId: DISCORD_CLIENT_ID,
@@ -36,15 +34,5 @@ export const auth = betterAuth({
             scope: ['guilds', 'identify'],
             disableImplicitSignUp: true,
         }
-    },
-    advanced: {
-        defaultCookieOptions: {
-            sameSite: "lax",
-            secure: !dev, // Secure cookies in production (HTTPS), not in development
-            httpOnly: true,
-            path: "/", // Ensure cookies work across the entire domain
-        },
-        useSecureCookies: !dev, // Use secure cookies in production
-        disableOriginCheck: true, // Native way to disable origin validation
     }
 });

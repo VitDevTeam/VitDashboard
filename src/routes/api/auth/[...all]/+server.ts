@@ -8,18 +8,7 @@ const handleAuthRequest = async (request: Request) => {
         console.log(`[${request.method}] ${request.url} - Calling auth.handler...`);
         const response = await auth.handler(request);
         console.log(`[${request.method}] ${request.url} - auth.handler responded with status: ${response.status}.`);
-
-        // Clone response and add standard cache control headers
-        const responseHeaders = new Headers(response.headers);
-        responseHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-        responseHeaders.set('Pragma', 'no-cache');
-        responseHeaders.set('Expires', '0');
-
-        return new Response(response.body, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: responseHeaders
-        });
+        return response;
     } catch (error: any) {
         console.error(`[${request.method}] ${request.url} - Auth Error:`, error);
         console.error(`[${request.method}] ${request.url} - Error Code:`, error.code);
@@ -30,14 +19,7 @@ const handleAuthRequest = async (request: Request) => {
             throw redirect(302, '/auth/error?message=Too many connections');
         }
         const errorMessage = dev ? error.message : 'An unexpected error occurred';
-        return json({ error: errorMessage }, {
-            status: 500,
-            headers: {
-                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
-        });
+        return json({ error: errorMessage }, { status: 500 });
     }
 };
 
