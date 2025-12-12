@@ -3,7 +3,7 @@ import { getSession } from "$lib/auth/session";
 export async function load({ event }) {
     try {
         const session = await getSession(event);
-
+        
         if (session?.user) {
             return {
                 user: session.user,
@@ -11,13 +11,17 @@ export async function load({ event }) {
             };
         }
     } catch (error) {
-        console.warn('Database/auth service unavailable, showing offline mode:', error);
+
+        if (error.status != 401) {
+            console.warn('Database/auth service unavailable, showing offline mode:', error);
         // Show page in offline mode
         return {
             user: null,
             dbStatus: 'offline',
             error: error.message
         };
+        }
+        
     }
 
     return {
