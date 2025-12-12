@@ -37,22 +37,11 @@ export const auth = betterAuth({
         }
     },
     advanced: {
-        cookiePrefix: "vitapp",
-        crossSubDomainCookies: {
-            enabled: false,
-        },
         defaultCookieOptions: {
             sameSite: "lax",
-            secure: !dev,
+            secure: !dev, // Secure cookie in production , not secure in dev
             httpOnly: true,
         },
-        useSecureCookies: !dev,
-    },
-    account: {
-        accountLinking: {
-            enabled: true,
-            trustedProviders: ["discord"],
-        },
-        skipStateCookieCheck: dev,
-    },
+        useSecureCookies: !dev, // secure cookies in prod
+    }
 });
