@@ -43,22 +43,34 @@ export async function getSession(event?: any) {
         throw error(500, "Unable to get request headers");
     }
 
-        console.log('getSession: getting session from auth.api');
-    const session = await auth.api.getSession({ headers });
+    console.log('getSession: getting session from auth.api');
+    let session;
+    try {
+        session = await auth.api.getSession({ headers });
+    } catch (authError) {
+        console.error('getSession: auth api error:', authError);
+        throw error(500, "Authentication service unavailable");
+    }
     console.log('getSession: session received', { userId: session?.user?.id });
 
-        if (!session) {
+    if (!session) {
         console.error('getSession: session is null, unauthorized');
         throw error(401, "Unauthorized");
     }
 
         console.log('getSession: getting account from db for user', session.user.id);
-    const account = await db
-        .selectFrom('account')
-        .select(['accountId'])
-        .where('userId', '=', session.user.id)
-        .where('providerId', '=', 'discord')
-        .executeTakeFirst();
+    let account;
+    try {
+        account = await db
+            .selectFrom('account')
+            .select(['accountId'])
+            .where('userId', '=', session.user.id)
+            .where('providerId', '=', 'discord')
+            .executeTakeFirst();
+    } catch (dbError) {
+        console.error('getSession: database query error:', dbError);
+        throw error(500, "Database service unavailable");
+    }
     console.log('getSession: account received', { accountId: account?.accountId });
 
         if (!account) {

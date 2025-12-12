@@ -1,0 +1,178 @@
+Elevate Your Project with Themes in SvelteKit + Tailwind CSS + DaisyUI
+Ready to add a touch of personalization to your web project? Let’s delve into theming with SvelteKit, Tailwind CSS, and DaisyUI. 🌈✨
+Esequiel Albornoz
+Esequiel Albornoz
+
+Follow
+4 min read
+·
+Nov 30, 2023
+6
+
+
+
+
+Press enter or click to view image in full size
+
+Demo
+Table of Contents
+· 1 Install the Theme-Change Library
+· 2 Initialize Theme-Change
+· 3 Define Your Themes
+∘ 3.1 Set the Default Theme
+· 4 Craft the Component
+∘ 4.1 Define Theme Options
+∘ 4.2 Craft a Stylish Dropdown Structure
+· 5 Embrace Dynamic Themes
+∘ 5.1 Import the Component
+∘ 5.2 Integrate the Component in Your HTML
+
+1 Install the Theme-Change Library
+Start by adding the theme-change library to your project:
+
+$ npm install -D theme-change
+2 Initialize Theme-Change
+Incorporate the magic into your project by initializing the theme-change library. Open your src/routes/+layout.svelte file and add the following code:
+
+<script>
+  import { themeChange } from 'theme-change';
+  import { onMount } from "svelte";
+  
+  import '../app.css';
+
+  onMount(()=> themeChange())
+</script>
+
+<slot />
+This snippet ensures seamless integration, making sure the theme-change library is loaded on the client side. Your project is now primed for dynamic theme transformations! 🎩🚀
+
+3 Define Your Themes
+Head over to the DaisyUI Themes page to explore a palette of themes. In your tailwind.config.js, include the themes you desire:
+
+/** @type {import('tailwindcss').Config} */
+export default {
+ content: ['./src/**/*.{html,js,svelte,ts}'],
+ theme: {
+  extend: {}
+ },
+ plugins: [require('@tailwindcss/typography'), require('daisyui')],
+ daisyui: {
+  themes: [
+   'light',
+   'dark',
+   'bumblebee',
+   'emerald',
+   'corporate',
+   'retro',
+   'cyberpunk',
+  ]
+ }
+};
+3.1 Set the Default Theme
+Choose a default theme for your project. In this case, we’ll go with the “light” theme by adding the data-theme property to the HTML tag in src/app.html
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <!-- ... -->
+</html>
+Get Esequiel Albornoz’s stories in your inbox
+Join Medium for free to get updates from this writer.
+
+Enter your email
+Subscribe
+4 Craft the <ThemeSwitcher /> Component
+4.1 Define Theme Options
+Let’s create a dynamic theme-switching experience with a custom component in src/lib/components/ThemeSwitcher.svelte:
+
+<script lang="ts">
+  const themes = [
+    'default',
+    'light',
+    'dark',
+    'bumblebee',
+    'emerald',
+    'corporate',
+    'retro',
+    'cyberpunk',
+  ]
+</script>
+Define an array of theme options. The “default” theme is included for a clean slate, falling back to the “light” theme set in src/app.html.
+
+4.2 Craft a Stylish Dropdown Structure
+Let’s fashion a sleek dropdown interface to make theme selection a delightful experience:
+
+<div class="dropdown">
+  <!-- Dropdown Button -->
+  <div tabindex="0" role="button" class="btn">
+    Theme
+    <svg
+      width="12px"
+      height="12px"
+      class="h-2 w-2 fill-current opacity-60 inline-block"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 2048 2048"
+    >
+      <path d="M1799 349l242 241-1017 1017L7 590l242-241 775 775 775-775z" />
+    </svg>
+  </div>
+
+  <!-- Dropdown Content -->
+  <ul
+    class="dropdown-content z-[1] p-2 shadow-2xl bg-base-300 rounded-box w-52 flex flex-col gap-y-2"
+  >
+    <!-- Theme Options -->
+    {#each themes as theme}
+      <li>
+        <!-- Radio Button for Each Theme -->
+        <input
+          type="radio"
+          name="theme-dropdown"
+          class="theme-controller btn btn-sm btn-block btn-ghost justify-start"
+          aria-label={theme}
+          value={theme}
+        />
+      </li>
+    {/each}
+  </ul>
+</div>
+This snippet seamlessly integrates your theme options with dynamic logic, allowing users to effortlessly select and switch between themes. Enhance your user experience with this polished and functional dropdown! 🎨🚀
+
+5 Embrace Dynamic Themes
+5.1 Import the Component
+First things first, let’s bring the magic to life. Import the <ThemeSwitcher /> component in your src/routes/+page.svelte file:
+
+<script lang="ts">
+  import ThemeSwitcher from "$lib/components/ThemeSwitcher.svelte";
+</script>
+5.2 Integrate the Component in Your HTML
+Now, let’s weave the magic into your HTML structure. Place the <ThemeSwitcher /> component where you want your users to experience dynamic theme-switching:
+
+<main class="flex flex-col items-center justify-center h-screen w-full">
+  <div class="flex gap-2 items-center">
+    <button class="btn btn-primary">Primary</button>
+
+    <!-- Integrate the ThemeSwitcher Component -->
+    <ThemeSwitcher />
+  </div>
+
+  <div>
+    <article class="prose">
+      <h1>Garlic bread with cheese: What the science tells us</h1>
+      <p>
+        For years, parents have espoused the health benefits of eating garlic bread with cheese to
+        their children, with the food earning such an iconic status in our culture that kids will
+        often dress up as warm, cheesy loaf for Halloween.
+      </p>
+      <p>
+        But a recent study shows that the celebrated appetizer may be linked to a series of rabies
+        cases springing up around the country.
+      </p>
+    </article>
+  </div>
+</main>
+Let’s take a moment to appreciate the final result below:
+
+Press enter or click to view image in full size
+
+Switching themes final result
+With this simple integration, your users can now dynamically switch themes, adding an interactive layer to your web experience!

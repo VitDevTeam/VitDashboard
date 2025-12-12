@@ -3,19 +3,27 @@
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
     import { browser } from "$app/environment";
-    
+    import ThemeSwitcher from "$lib/components/ThemeSwitcher.svelte";
+
     let sessionData = $state(null);
-    
+    let isLoading = $state(true);
+
     onMount(() => {
         if (browser) {
-            const sessionStore = useSession();
-            
-            // Subscribe to the store
-            const unsubscribe = sessionStore.subscribe((value) => {
-                sessionData = value;
-            });
-            
-            return unsubscribe;
+         
+            setTimeout(() => {
+                const sessionStore = useSession();
+
+               
+                const unsubscribe = sessionStore.subscribe((value) => {
+                    sessionData = value;
+                    isLoading = false;
+                });
+
+                return unsubscribe;
+            }, 100); 
+        } else {
+            isLoading = false;
         }
     });
     
@@ -42,6 +50,9 @@
         <a href="/" class="btn btn-ghost text-xl font-bold w-full">
             VIT Dashboard
         </a>
+        <div class="mt-2">
+            <ThemeSwitcher />
+        </div>
     </div>
     <ul class="menu p-4 flex-1">
         <li><a href="/user/me" data-sveltekit-reload>Profile</a></li>

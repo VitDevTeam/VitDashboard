@@ -1,11 +1,20 @@
 <script>
     import Nav from "$lib/components/nav.svelte";
-    
+
     let { data } = $props();
 </script>
 
 <div class="min-h-screen bg-base-200 p-6">
     <div class="container mx-auto">
+        {#if data.dbStatus === 'offline'}
+            <div class="alert alert-warning mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 17.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span>Database temporarily unavailable. Some features may not work.</span>
+            </div>
+        {/if}
+
         <div class="text-center mb-12">
             <h1 class="text-5xl font-bold mb-4">Welcome to VIT Dashboard</h1>
             <p class="text-xl">Manage your virtual items and track your progress</p>

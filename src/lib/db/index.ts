@@ -67,16 +67,49 @@ export function getQueryStats() {
   return Object.fromEntries(queryStats);
 }
 
-export const sql = postgres(DB_URL, shouldNoVerify(DB_URL) ? {
-    max: 2,
-    idle_timeout: 30,
-    connect_timeout: 10,
-    ssl: { rejectUnauthorized: false }
-} : {
-    max: 2,
-    idle_timeout: 30,
-    connect_timeout: 10
-});
+// Create connection with error handling
+let sqlConnection: any = null;
+let connectionAttempts = 0;
+const MAX_CONNECTION_ATTEMPTS = 3;
+
+function createConnection() {
+    try {
+        connectionAttempts++;
+        console.log(`Creating database connection (attempt ${connectionAttempts})`);
+
+        const options = shouldNoVerify(DB_URL) ? {
+            max: 1, 
+            idle_timeout: 10, 
+            connect_timeout: 3, 
+            ssl: { rejectUnauthorized: false },
+            onnotice: () => {}, 
+            onparameter: () => {}
+        } : {
+            max: 1, 
+            idle_timeout: 10, 
+            connect_timeout: 3 
+        };
+
+        sqlConnection = postgres(DB_URL, options);
+        connectionAttempts = 0; // reset if suces
+        return sqlConnection;
+    } catch (error) {
+        console.error(`Database connection attempt ${connectionAttempts} failed:`, error);
+
+        if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
+            console.log(`Retrying connection in 1 second...`);
+            setTimeout(createConnection, 1000);
+        } else {
+            console.error('Max connection attempts reached. Database unavailable.');
+            throw error;
+        }
+    }
+}
+
+// Initialize connection
+createConnection();
+
+export const sql = sqlConnection;
 
 export const dialect = new PostgresJSDialect({ postgres: sql });
 export const db = new Kysely<Database>({ dialect });

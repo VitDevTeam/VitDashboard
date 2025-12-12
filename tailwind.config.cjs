@@ -10,6 +10,14 @@ module.exports = {
   },
   plugins: [require('daisyui')],
   daisyui: {
-        themes: ["corporate", "cerberus"],
+    themes: [
+      'light',
+      'dark'
+    ],
+    
+  },
+  // Optimize for production
+  future: {
+    hoverOnlyWhenSupported: true,
   },
 };

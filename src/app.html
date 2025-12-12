@@ -4,6 +4,17 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		%sveltekit.head%
+		<script>
+			// Performance monitoring
+			window.addEventListener('load', () => {
+				const perfData = performance.getEntriesByType('navigation')[0];
+				const loadTime = perfData.loadEventEnd - perfData.fetchStart;
+				console.log(`Page load time: ${loadTime}ms`);
+				if (loadTime > 3000) {
+					console.warn('Slow page load detected!');
+				}
+			});
+		</script>
 	</head>
 	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
