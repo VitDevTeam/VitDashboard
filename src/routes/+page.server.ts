@@ -11,7 +11,7 @@ export async function load({ event }) {
             };
         }
     } catch (error) {
-        console.warn('Database/auth service unavailable, showing offline mode:', error.message);
+        console.warn('Database/auth service unavailable, showing offline mode:', error);
         // Show page in offline mode
         return {
             user: null,
